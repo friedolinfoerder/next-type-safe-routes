@@ -6,25 +6,29 @@ import chokidar from "chokidar";
 import path from "path";
 
 const packageName = "next-type-safe-routes";
-const typeFolder = path.join("@types", packageName);
+const defaultTypeFolder = path.join("@types", packageName);
 
 const log = (message: string) => {
   console.log(`\x1b[36m${packageName}\x1b[0m: ${message}`);
 };
 
-const writeTypesToDisc = (nextPagesDirectory: string) => {
+const writeTypesToDisc = (nextPagesDirectory: string, typesDestination?: string) => {
   // we assume the src directory is the directory containing the pages directory
   const srcDir = path.dirname(nextPagesDirectory);
-  const typeFolderPath = path.join(srcDir, typeFolder);
+  const typeFolderPath = typesDestination || path.join(srcDir, defaultTypeFolder);
   const typeScriptFile = generateTypeScriptFile(nextPagesDirectory);
 
   mkdirp.sync(typeFolderPath);
   fs.writeFileSync(path.join(typeFolderPath, "index.d.ts"), typeScriptFile);
 
-  log(`types written to ${typeFolder}`);
+  log(`types written to ${typeFolderPath}`);
 };
 
-const run = (nextConfig: any = {}) => {
+interface NextTypeSafeRoutesConfig {
+  typesDestination?: string;
+}
+
+const run = (nextConfig: any = {}, pluginConfig: NextTypeSafeRoutesConfig = {}) => {
   return Object.assign({}, nextConfig, {
     webpack(config, options) {
       // This seems to be the way to get the path to the pages
@@ -34,11 +38,11 @@ const run = (nextConfig: any = {}) => {
       // in the root of the project
       const pagesDir = config.resolve.alias["private-next-pages"];
       // Generate the types file when the app is being compiled
-      writeTypesToDisc(pagesDir);
+      writeTypesToDisc(pagesDir, pluginConfig.typesDestination);
       // Generate the types file again when page files are added/removed
       const watcher = chokidar.watch(pagesDir, { ignoreInitial: true });
-      watcher.on("add", () => writeTypesToDisc(pagesDir));
-      watcher.on("unlink", () => writeTypesToDisc(pagesDir));
+      watcher.on("add", () => writeTypesToDisc(pagesDir, pluginConfig.typesDestination));
+      watcher.on("unlink", () => writeTypesToDisc(pagesDir, pluginConfig.typesDestination));
 
       // if other webpack customizations exist, run them
       if (typeof nextConfig.webpack === "function") {
