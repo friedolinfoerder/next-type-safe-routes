@@ -1,8 +1,8 @@
 import generateTypeScriptFile from "./generateTypeScriptFile";
 
-import mkdirp from "mkdirp";
-import fs from "fs";
 import chokidar from "chokidar";
+import fs from "fs";
+import mkdirp from "mkdirp";
 import path from "path";
 
 const packageName = "next-type-safe-routes";
@@ -19,7 +19,7 @@ const writeTypesToDisc = (nextPagesDirectory: string, typesDestination?: string)
   const typeScriptFile = generateTypeScriptFile(nextPagesDirectory);
 
   mkdirp.sync(typeFolderPath);
-  fs.writeFileSync(path.join(typeFolderPath, "index.d.ts"), typeScriptFile);
+  fs.writeFileSync(path.join(typeFolderPath, "index.ts"), typeScriptFile);
 
   log(`types written to ${typeFolderPath}`);
 };
